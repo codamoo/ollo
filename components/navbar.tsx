@@ -57,16 +57,16 @@ export default function Navbar() {
             {isAuthenticated ? (
               // Logged in navigation
               <>
-                <Link href="/dashboard">
-                  <Button variant={pathname === '/dashboard' ? 'default' : 'ghost'}>
+                <Link href="/feed">
+                  <Button variant={pathname === '/feed' ? 'default' : 'ghost'}>
                     <Home className="h-5 w-5" />
                   </Button>
                 </Link>
-                                <Link href="/explore">
-                                  <Button variant={pathname === '/explore' ? 'default' : 'ghost'}>
-                                    <Search className="h-5 w-5" />
-                                  </Button>
-                                </Link>
+                <Link href="/explore">
+                  <Button variant={pathname === '/explore' ? 'default' : 'ghost'}>
+                   <Search className="h-5 w-5" />
+                  </Button>
+                </Link>
                 <Link href={username ? `/${username}` : '/profile'}>
                   <Button variant={pathname === `/${username}` || pathname === '/profile' ? 'default' : 'ghost'}>
                     <User className="h-5 w-5" />
