@@ -141,8 +141,8 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
         .select('*', { count: 'exact', head: true })
         .eq('follower_id', profile.id);
 
-      setFollowers(followersData?.map(f => f.profiles) || []);
-      setFollowing(followingData?.map(f => f.profiles) || []);
+      setFollowers(followersData?.map((f: { profiles: any; }) => f.profiles) || []);
+      setFollowing(followingData?.map((f: { profiles: any; }) => f.profiles) || []);
       setStats({
         followers_count: followerCount?.count || 0,
         following_count: followingCount?.count || 0,
