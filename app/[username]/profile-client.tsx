@@ -323,7 +323,7 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
           background: `linear-gradient(to right, hsl(var(--profile-gradient-from)), hsl(var(--profile-gradient-to)))`
         }}
       >
-        <div className="absolute -bottom-16 left-1/2 md:left-1/2 md:-translate-x-1/2 lg:left-20">
+        <div className="absolute -bottom-16 left-1/2 md:left-1/2 md:-translate-x-1/2">
           {profile.avatar_url ? (
             <img
               src={profile.avatar_url}
