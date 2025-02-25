@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import Navbar from '@/components/navbar';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -36,28 +37,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#030712] text-white overflow-hidden">
       {/* Navigation */}
-      <nav className="border-b border-gray-800/50 bg-black/50 backdrop-blur-sm fixed w-full z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="w-6 h-6 text-emerald-500" />
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-blue-500">
-                ollo
-              </span>
-            </div>
-            <div className="flex gap-4 items-center">
-              <Link href="/login">
-                <Button variant="ghost" className="text-sm">Sign in</Button>
-              </Link>
-              <Link href="/login">
-                <Button className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-sm">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}

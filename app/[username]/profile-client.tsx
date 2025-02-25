@@ -304,14 +304,12 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
             <ProfileFollowing profileId={profile.id} currentUserId={currentUserId} />
           </div>
           <div className="md:col-span-2">
-            <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Posts</h2>
               <PostsList 
                 posts={userPosts}
                 currentUserId={currentUserId}
                 onPostsUpdate={setUserPosts}
               />
-            </Card>
           </div>
         </div>
       </main>

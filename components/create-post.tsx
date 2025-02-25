@@ -73,14 +73,14 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (!existingProfile) {
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
-            user_id: user.id,
+            id: user.id,
             username: user.email?.split('@')[0] || `user_${Date.now()}`,
             display_name: user.email?.split('@')[0] || `User ${Date.now()}`,
             email: user.email

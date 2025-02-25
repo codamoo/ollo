@@ -3,13 +3,19 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, MoreVertical } from 'lucide-react';
 import { AudioPlayer } from '@/components/ui/audio-player';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Profile {
   id: string;
@@ -145,16 +151,27 @@ export default function PostsList({ posts, currentUserId, onPostsUpdate }: Posts
                 >
                   {post.is_liked ? "❤️" : "🤍"} {post.likes_count}
                 </Button>
-                {post.user_id === currentUserId && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeletePost(post.id, post.user_id)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
-                )}
+                
+                {/* More menu dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {post.user_id === currentUserId && (
+                      <DropdownMenuItem 
+                        className="text-red-500 focus:text-red-500 cursor-pointer"
+                        onClick={() => handleDeletePost(post.id, post.user_id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete post
+                      </DropdownMenuItem>
+                    )}
+                    {/* Additional menu items can be added here */}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             {post.type === 'text' || post.type === 'markdown' ? (
@@ -164,12 +181,12 @@ export default function PostsList({ posts, currentUserId, onPostsUpdate }: Posts
             ) : (
               <p className="text-gray-700">{post.content}</p>
             )}
-            {post.type === 'music' ? (
+            {post.type === 'music' && post.media_url && (
               <AudioPlayer
                 src={Array.isArray(post.media_url) ? post.media_url[0] : post.media_url}
                 className="mt-4"
               />
-            ) : null}
+            )}
           </Card>
         );
       })}
