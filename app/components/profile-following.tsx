@@ -21,7 +21,12 @@ interface FollowStats {
   is_following: boolean;
 }
 
-export default function ProfileFollowing({ profileId }: { profileId: string }) {
+interface ProfileFollowingProps {
+  profileId: string;
+  currentUserId: string | null;
+}
+
+export default function ProfileFollowing({ profileId, currentUserId }: ProfileFollowingProps) {
   const [followers, setFollowers] = useState<Profile[]>([]);
   const [following, setFollowing] = useState<Profile[]>([]);
   const [stats, setStats] = useState<FollowStats>({
@@ -29,7 +34,6 @@ export default function ProfileFollowing({ profileId }: { profileId: string }) {
     following_count: 0,
     is_following: false
   });
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFollowData();
