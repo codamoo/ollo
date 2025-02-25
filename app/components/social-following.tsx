@@ -63,8 +63,8 @@ export default function SocialFollowing({ userId }: { userId: string }) {
           user_id: userId
         });
 
-      setFollowers(followersData?.map(f => f.profiles) || []);
-      setFollowing(followingData?.map(f => f.profiles) || []);
+      setFollowers(followersData?.map((f: { profiles: Profile }) => f.profiles) || []);
+      setFollowing(followingData?.map((f: { profiles: Profile })  => f.profiles) || []);
       setStats({
         followers_count: profileData?.followers_count || 0,
         following_count: profileData?.following_count || 0,
