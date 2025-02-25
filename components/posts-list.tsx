@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2, MoreVertical } from 'lucide-react';
+import { Trash2, MoreVertical, Edit2 } from 'lucide-react';
 import { AudioPlayer } from '@/components/ui/audio-player';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -16,6 +16,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface Profile {
   id: string;
@@ -51,12 +54,16 @@ interface PostsListProps {
 }
 
 export default function PostsList({ posts, currentUserId, onPostsUpdate }: PostsListProps) {
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editedContent, setEditedContent] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+
   // Helper function to get the display name and username
   const getPostUser = (post: Post) => {
     return {
-      username: post.username || post.profiles?.username,
-      displayName: post.display_name || post.profiles?.display_name,
-      avatarUrl: post.avatar_url || post.profiles?.avatar_url
+      username: post.username || post.author_username || post.profiles?.username,
+      displayName: post.display_name || post.author_display_name || post.profiles?.display_name,
+      avatarUrl: post.avatar_url || post.author_avatar_url || post.profiles?.avatar_url
     };
   };
 
@@ -79,6 +86,46 @@ export default function PostsList({ posts, currentUserId, onPostsUpdate }: Posts
     } catch (error) {
       console.error('Error deleting post:', error);
       toast.error('Error deleting post');
+    }
+  };
+
+  const handleEditPost = (post: Post) => {
+    setEditingPost(post);
+    setEditedContent(post.content);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPost || !currentUserId) return;
+    
+    if (editingPost.user_id !== currentUserId) {
+      toast.error("You can only edit your own posts");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('posts')
+        .update({ content: editedContent })
+        .match({ id: editingPost.id, user_id: currentUserId });
+
+      if (error) throw error;
+
+      // Update the posts list with the edited content
+      onPostsUpdate(
+        posts.map(post => 
+          post.id === editingPost.id 
+            ? { ...post, content: editedContent }
+            : post
+        )
+      );
+      
+      toast.success('Post updated successfully');
+      setIsEditing(false);
+      setEditingPost(null);
+    } catch (error) {
+      console.error('Error updating post:', error);
+      toast.error('Error updating post');
     }
   };
 
@@ -123,73 +170,114 @@ export default function PostsList({ posts, currentUserId, onPostsUpdate }: Posts
   };
 
   return (
-    <div className="space-y-4">
-      {posts.map((post) => {
-        const user = getPostUser(post);
-        return (
-          <Card key={post.id} className="p-4 post-hover-effect">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-4">
-                <div>
-                  <Link 
-                    href={`/${post.author_username}`} 
-                    className="font-semibold hover:underline"
-                  >
-                    {post.author_display_name || post.author_username || 'Anonymous'}
+    <>
+      <div className="space-y-4">
+        {posts.map((post) => {
+          const user = getPostUser(post);
+          return (
+            <Card key={post.id} className="p-4 post-hover-effect">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-4">
+                  <Link href={`/${user.username}`}>
+                    <Avatar className="h-10 w-10 cursor-pointer">
+                      <AvatarImage src={user.avatarUrl || undefined} alt={user.displayName || user.username || 'User'} />
+                      <AvatarFallback>
+                        {(user.displayName || user.username || 'A')[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Link>
-                  <div className="text-sm text-gray-500">
-                    {new Date(post.created_at).toLocaleDateString()}
+                  <div>
+                    <Link 
+                      href={`/${user.username}`} 
+                      className="font-semibold hover:underline"
+                    >
+                      {user.displayName || user.username || 'Anonymous'}
+                    </Link>
+                    <div className="text-sm text-gray-500">
+                      {new Date(post.created_at).toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleLike(post.id)}
+                    className={post.is_liked ? "text-red-500" : ""}
+                  >
+                    {post.is_liked ? "❤️" : "🤍"} {post.likes_count}
+                  </Button>
+                  
+                  {/* More menu dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {post.user_id === currentUserId && (
+                        <>
+                          <DropdownMenuItem 
+                            className="cursor-pointer"
+                            onClick={() => handleEditPost(post)}
+                          >
+                            <Edit2 className="h-4 w-4 mr-2" />
+                            Edit post
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-500 focus:text-red-500 cursor-pointer"
+                            onClick={() => handleDeletePost(post.id, post.user_id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete post
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      {/* Additional menu items can be added here */}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleLike(post.id)}
-                  className={post.is_liked ? "text-red-500" : ""}
-                >
-                  {post.is_liked ? "❤️" : "🤍"} {post.likes_count}
-                </Button>
-                
-                {/* More menu dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {post.user_id === currentUserId && (
-                      <DropdownMenuItem 
-                        className="text-red-500 focus:text-red-500 cursor-pointer"
-                        onClick={() => handleDeletePost(post.id, post.user_id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete post
-                      </DropdownMenuItem>
-                    )}
-                    {/* Additional menu items can be added here */}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            {post.type === 'text' || post.type === 'markdown' ? (
-              <div>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
-              </div>
-            ) : (
-              <p className="text-gray-700">{post.content}</p>
-            )}
-            {post.type === 'music' && post.media_url && (
-              <AudioPlayer
-                src={Array.isArray(post.media_url) ? post.media_url[0] : post.media_url}
-                className="mt-4"
-              />
-            )}
-          </Card>
-        );
-      })}
-    </div>
+              {post.type === 'text' || post.type === 'markdown' ? (
+                <div>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-gray-700">{post.content}</p>
+              )}
+              {post.type === 'music' && post.media_url && (
+                <AudioPlayer
+                  src={Array.isArray(post.media_url) ? post.media_url[0] : post.media_url}
+                  className="mt-4"
+                />
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Edit Post Dialog */}
+      <Dialog open={isEditing} onOpenChange={(open) => !open && setIsEditing(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Post</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            className="min-h-[150px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -12,11 +12,25 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
+      
+      if (session?.user) {
+        // Fetch the user's profile to get their username
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (!error && data) {
+          setUsername(data.username);
+        }
+      }
     };
     
     checkAuth();
@@ -48,8 +62,8 @@ export default function Navbar() {
                     <Home className="h-5 w-5" />
                   </Button>
                 </Link>
-                <Link href="/profile">
-                  <Button variant={pathname === '/profile' ? 'default' : 'ghost'}>
+                <Link href={username ? `/${username}` : '/profile'}>
+                  <Button variant={pathname === `/${username}` || pathname === '/profile' ? 'default' : 'ghost'}>
                     <User className="h-5 w-5" />
                   </Button>
                 </Link>

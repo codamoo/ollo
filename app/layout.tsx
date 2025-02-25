@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Social Platform',
+  title: 'ollo',
   description: 'A modern social platform for creators',
 };
 

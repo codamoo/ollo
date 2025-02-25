@@ -12,8 +12,10 @@ import Loading from '@/components/loading';
 import ErrorMessage from '@/components/error-message';
 import ProfileFollowing from '../components/profile-following';
 import ProfileSettings from '../components/profile-settings';
-import { UserCircle2, MapPin, Link as LinkIcon, Calendar } from 'lucide-react';
+import { UserCircle2, MapPin, Link as LinkIcon, Calendar, BadgeCheck, Copy, Share2 } from 'lucide-react';
 import PostsList from '@/components/posts-list';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 interface Post {
   id: string;
@@ -30,6 +32,8 @@ interface Profile {
   id: string;
   username?: string;
   display_name?: string;
+  is_verified?: boolean;
+  joined_date?: string;
 }
 
 interface PostWithProfile extends Post {
@@ -51,7 +55,9 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
     id: '',
     location: '',
     website: '',
-    created_at: ''
+    created_at: '',
+    is_verified: false,
+    joined_date: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +70,7 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
     is_following: false
   });
   const [userPosts, setUserPosts] = useState<PostWithProfile[]>([]);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -220,6 +227,88 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
     }
   };
 
+  // Function to copy profile URL to clipboard
+  const copyProfileUrl = () => {
+    try {
+      const url = `${window.location.origin}/${profile.username}`;
+      navigator.clipboard.writeText(url)
+        .then(() => {
+          setCopied(true);
+          toast.success('Profile URL copied to clipboard');
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy: ', err);
+          // Fallback for browsers that don't support clipboard API
+          fallbackCopyTextToClipboard(url);
+        });
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toast.error('Failed to copy URL');
+    }
+  };
+
+  // Fallback copy method for older browsers
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    
+    // Make the textarea out of viewport
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        setCopied(true);
+        toast.success('Profile URL copied to clipboard');
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        toast.error('Failed to copy URL');
+      }
+    } catch (err) {
+      console.error('Fallback: Oops, unable to copy', err);
+      toast.error('Failed to copy URL');
+    }
+
+    document.body.removeChild(textArea);
+  };
+
+  // Function to share profile
+  const shareProfile = async () => {
+    const url = `${window.location.origin}/${profile.username}`;
+    const title = `Check out ${profile.display_name || profile.username}'s profile`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          url
+        });
+        toast.success('Profile shared successfully');
+      } catch (error) {
+        console.error('Error sharing:', error);
+        if (error instanceof Error && error.name !== 'AbortError') {
+          toast.error('Error sharing profile');
+        }
+      }
+    } else {
+      // If Web Share API is not available, fall back to copying the URL
+      copyProfileUrl();
+    }
+  };
+
+  // Format joined date
+  const formatJoinedDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
   if (loading) return <Loading />;
   if (error) return <ErrorMessage message={error} />;
 
@@ -253,54 +342,108 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
       <main className="max-w-4xl mx-auto px-4 pt-20 pb-8">
         {/* Profile Details */}
         <div className="flex justify-between items-start mb-6">
-          <div className="flex space-y-2">
-            <div className="grid items-center">
+          <div className="flex flex-col space-y-2">
+            <div className="flex items-center space-x-2">
               <h1 className="text-3xl font-bold">{profile.display_name || username}</h1>
-              <p className="text-muted-foreground">@{profile.username}</p>
+              {profile.is_verified && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <BadgeCheck className="h-5 w-5 text-blue-500" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Verified Account</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
-            {currentUserId && currentUserId !== profile.id && (
+            <div className="flex items-center space-x-2">
+              <p className="text-muted-foreground">@{profile.username}</p>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6" 
+                      onClick={copyProfileUrl}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{copied ? 'Copied!' : 'Copy username'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6" 
+                      onClick={shareProfile}
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Share profile</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="text-xs">
+                <Calendar className="h-3 w-3 mr-1" />
+                Joined {formatJoinedDate(profile.created_at)}
+              </Badge>
+            </div>
+          </div>
+          {currentUserId && currentUserId !== profile.id && (
               <Button 
-                className="ml-3"
+                className="mt-2"
                 onClick={handleFollow}
                 variant={stats.is_following ? "outline" : "default"}
               >
                 {stats.is_following ? 'Unfollow' : 'Follow'}
               </Button>
             )}
-          </div>
-          {currentUserId && (
-            <Button variant="outline" onClick={() => {}}>
-              Edit Profile
-            </Button>
-          )}
+                      {currentUserId && currentUserId === profile.id && (
+                        <Button variant="outline" onClick={() => window.location.href = '/settings'}>
+                          Edit Profile
+                        </Button>
+                      )}
         </div>
 
         {/* Tabs or Sections */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           <div>
-                    {/* Bio */}
-        {profile.bio && (
-          <p className="text-lg mb-6">{profile.bio}</p>
-        )}
+            {/* Bio */}
+            {profile.bio && (
+              <p className="text-lg mb-6">{profile.bio}</p>
+            )}
 
-        {/* Location and Website */}
-        <div className="flex space-x-4 mb-6">
-          {profile.location && (
-            <div className="flex items-center space-x-2">
-              <MapPin className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{profile.location}</span>
+            {/* Location and Website */}
+            <div className="flex space-x-4 mb-6">
+              {profile.location && (
+                <div className="flex items-center space-x-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">{profile.location}</span>
+                </div>
+              )}
+              {profile.website && (
+                <div className="flex items-center space-x-2">
+                  <LinkIcon className="w-4 h-4 text-muted-foreground" />
+                  <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:underline">
+                    {profile.website}
+                  </a>
+                </div>
+              )}
             </div>
-          )}
-          {profile.website && (
-            <div className="flex items-center space-x-2">
-              <LinkIcon className="w-4 h-4 text-muted-foreground" />
-              <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:underline">
-                {profile.website}
-              </a>
-            </div>
-          )}
-        </div>
             <ProfileFollowing profileId={profile.id} currentUserId={currentUserId} />
           </div>
           <div className="md:col-span-2">
