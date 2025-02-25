@@ -42,7 +42,6 @@ export default function ProfileFollowing({ profileId, currentUserId }: ProfileFo
   async function fetchFollowData() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id || null);
 
       // Get followers
       const { data: followersData } = await supabase
@@ -74,8 +73,8 @@ export default function ProfileFollowing({ profileId, currentUserId }: ProfileFo
               user_id: profileId
             });
             
-      setFollowers(followersData?.map(f => f.profiles) || []);
-      setFollowing(followingData?.map(f => f.profiles) || []);
+      setFollowers(followersData?.map((f: { profiles: Profile }) => f.profiles) || []);
+      setFollowing(followingData?.map((f: { profiles: Profile }) => f.profiles) || []);
       setStats({
         followers_count: profileData?.followers_count || 0,
         following_count: profileData?.following_count || 0,
