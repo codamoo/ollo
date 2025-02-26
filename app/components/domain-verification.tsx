@@ -222,7 +222,7 @@ export default function DomainVerification({ domain, onVerificationComplete }: D
                     <p>For GoDaddy:</p>
                     <ol className="list-decimal list-inside space-y-1">
                       <li>Log in to your GoDaddy account</li>
-                      <li>Go to My Products > DNS</li>
+                      <li>Go to My Products DNS</li>
                       <li>Find the CNAME section</li>
                       <li>Add a new record with Host: @ and Points to: profiles.ollo.bio</li>
                       <li>If you can't use @ for the root domain, try using a www subdomain instead</li>
