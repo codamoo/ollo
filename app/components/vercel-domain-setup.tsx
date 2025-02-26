@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -79,7 +80,7 @@ export default function VercelDomainSetup({ domain, onSetupComplete }: VercelDom
         
         {setupComplete && verificationDetails && (
           <div className="space-y-4">
-            <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
+            <Alert variant="default" className="mb-4 bg-green-50 border border-green-200">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-800">Domain Added Successfully</AlertTitle>
               <AlertDescription className="text-green-700">
