@@ -108,6 +108,12 @@ export async function GET(request: Request) {
     const { error } = await supabase
       .from('integrations')
       .upsert({
+        id: (await supabase
+          .from('integrations')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('platform', 'spotify')
+          .maybeSingle()).data?.id,
         user_id: userId,
         platform: 'spotify',
         platform_username: profileData.display_name,
@@ -117,6 +123,8 @@ export async function GET(request: Request) {
         token_expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
         display_on_profile: true,
         updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,platform'
       });
     
     if (error) {
