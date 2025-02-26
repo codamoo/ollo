@@ -16,6 +16,7 @@ import { UserCircle2, MapPin, Link as LinkIcon, Calendar, BadgeCheck, Copy, Shar
 import PostsList from '@/components/posts-list';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import SpotifyPlayer from '../components/spotify-player';
 
 interface Post {
   id: string;
@@ -444,6 +445,10 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
                 </div>
               )}
             </div>
+            
+            {/* Spotify Player */}
+            <SpotifyPlayer userId={profile.id} />
+            
             <ProfileFollowing profileId={profile.id} currentUserId={currentUserId} />
           </div>
           <div className="md:col-span-2">

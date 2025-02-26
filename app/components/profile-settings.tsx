@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2 } from 'lucide-react';
 import ProfileThemeSettings from './profile-theme-settings';
+import SpotifyIntegration from './spotify-integration';
 
 interface ProfileSettings {
   username: string;
@@ -129,6 +130,7 @@ export default function ProfileSettings({ profile }: ProfileSettingsProps) {
         <TabsTrigger value="profile">Profile</TabsTrigger>
         <TabsTrigger value="settings">Settings</TabsTrigger>
         <TabsTrigger value="theme">Theme</TabsTrigger>
+        <TabsTrigger value="integrations">Integrations</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile">
@@ -280,6 +282,12 @@ export default function ProfileSettings({ profile }: ProfileSettingsProps) {
       <TabsContent value="theme">
         <ProfileThemeSettings />
       </TabsContent>
+
+      <TabsContent value="integrations">
+        <div className="space-y-6">
+        </div>
+      </TabsContent>
+      <SpotifyIntegration />
     </Tabs>
   );
 }
