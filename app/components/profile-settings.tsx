@@ -14,6 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2 } from 'lucide-react';
 import ProfileThemeSettings from './profile-theme-settings';
 import SpotifyIntegration from './spotify-integration';
+import DomainVerification from './domain-verification';
+import { Globe, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ProfileSettings {
   username: string;
@@ -23,6 +26,7 @@ interface ProfileSettings {
   website: string | null;
   location: string | null;
   is_verified: boolean;
+  custom_domain: string | null;
 }
 
 interface UserSettings {
@@ -131,6 +135,7 @@ export default function ProfileSettings({ profile }: ProfileSettingsProps) {
         <TabsTrigger value="settings">Settings</TabsTrigger>
         <TabsTrigger value="theme">Theme</TabsTrigger>
         <TabsTrigger value="integrations">Integrations</TabsTrigger>
+        <TabsTrigger value="domains">Domains</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile">
@@ -196,6 +201,27 @@ export default function ProfileSettings({ profile }: ProfileSettingsProps) {
                 onChange={(e) => handleInputChange('location', e.target.value)}
                 disabled={loading}
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Custom Domain</label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  value={profileData.custom_domain || ''}
+                  onChange={(e) => handleInputChange('custom_domain', e.target.value)}
+                  placeholder="yourdomain.com"
+                  disabled={loading}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open('https://docs.example.com/custom-domains', '_blank')}
+                >
+                  Help
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter your domain without http:// or www. You'll need to set up a CNAME record pointing to our servers.
+              </p>
             </div>
             {unsavedChanges && (
               <div className="flex justify-end">
@@ -284,10 +310,70 @@ export default function ProfileSettings({ profile }: ProfileSettingsProps) {
       </TabsContent>
 
       <TabsContent value="integrations">
-        <div className="space-y-6">
-        </div>
+        <SpotifyIntegration />
       </TabsContent>
-      <SpotifyIntegration />
+
+      <TabsContent value="domains">
+        <Card className="p-6">
+          <div className="flex items-center space-x-4 mb-6">
+            <Globe className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="text-2xl font-bold">Custom Domain</h2>
+              <p className="text-muted-foreground">Connect a custom domain to your profile</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <Alert variant="default" className="bg-blue-50 border-blue-200">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                With a custom domain, visitors can access your profile directly at your own domain.
+              </AlertDescription>
+            </Alert>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Your Domain</label>
+              <Input
+                value={profileData.custom_domain || ''}
+                onChange={(e) => handleInputChange('custom_domain', e.target.value)}
+                placeholder="yourdomain.com"
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Enter your domain without http:// or www. (e.g., example.com)
+              </p>
+            </div>
+
+            {unsavedChanges && (
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleProfileUpdate}
+                  disabled={loading}
+                >
+                  Save Domain
+                </Button>
+              </div>
+            )}
+
+            {profileData.custom_domain && (
+              <DomainVerification domain={profileData.custom_domain} />
+            )}
+
+            {!profileData.custom_domain && (
+              <div className="bg-muted p-4 rounded-md text-sm">
+                <p className="font-medium mb-2">How to set up a custom domain:</p>
+                <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>Purchase a domain from a domain registrar (e.g., Namecheap, GoDaddy)</li>
+                  <li>Enter your domain above and save</li>
+                  <li>Follow the verification instructions to set up DNS records</li>
+                  <li>Wait for DNS propagation (can take up to 48 hours)</li>
+                  <li>Verify your domain</li>
+                </ol>
+              </div>
+            )}
+          </div>
+        </Card>
+      </TabsContent>
     </Tabs>
   );
 }

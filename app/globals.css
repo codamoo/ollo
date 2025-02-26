@@ -48,6 +48,16 @@
     --profile-gradient-from: 221 83% 53%;    /* blue-500 */
     --profile-gradient-to: 271 91% 65%;      /* purple-500 */
     --profile-accent: 221 83% 53%;           /* blue-500 */
+    
+    /* Custom domain theme colors - light mode */
+    --domain-background: 0 0% 100%;
+    --domain-foreground: 0 0% 3.9%;
+    --domain-border: 0 0% 89.8%;
+    --domain-input: 0 0% 96.1%;
+    --domain-input-text: 0 0% 9%;
+    --domain-button: 221 83% 53%;
+    --domain-button-text: 0 0% 100%;
+    --domain-accent: 221 83% 53%;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -79,6 +89,16 @@
     --profile-gradient-from: 221 83% 53%;    /* blue-500 */
     --profile-gradient-to: 271 91% 65%;      /* purple-500 */
     --profile-accent: 221 83% 53%;           /* blue-500 */
+    
+    /* Custom domain theme colors - dark mode */
+    --domain-background: 0 0% 10%;
+    --domain-foreground: 0 0% 98%;
+    --domain-border: 215 25% 27%;
+    --domain-input: 217 19% 27%;
+    --domain-input-text: 0 0% 98%;
+    --domain-button: 221 83% 53%;
+    --domain-button-text: 0 0% 100%;
+    --domain-accent: 221 83% 65%;
   }
 }
 
@@ -89,6 +109,65 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Custom domain component styles */
+.domain-card {
+  background-color: hsl(var(--domain-background));
+  color: hsl(var(--domain-foreground));
+  border-color: hsl(var(--domain-border));
+  border-width: 1px;
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.domain-input {
+  background-color: hsl(var(--domain-input));
+  color: hsl(var(--domain-input-text));
+  border-color: hsl(var(--domain-border));
+  border-width: 1px;
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+}
+
+.domain-button {
+  background-color: hsl(var(--domain-button));
+  color: hsl(var(--domain-button-text));
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+}
+
+.domain-button:hover {
+  opacity: 0.9;
+}
+
+.domain-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.domain-accent-text {
+  color: hsl(var(--domain-accent));
+}
+
+.domain-section {
+  margin-bottom: 1.5rem;
+}
+
+.domain-section-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.domain-verification-item {
+  background-color: hsl(var(--domain-input));
+  border-color: hsl(var(--domain-border));
+  border-width: 1px;
+  border-radius: calc(var(--radius) - 2px);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .border-primary {
