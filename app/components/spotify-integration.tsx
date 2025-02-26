@@ -182,9 +182,17 @@ export default function SpotifyIntegration() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Update the integration instead of deleting it
       const { error } = await supabase
         .from('integrations')
-        .delete()
+        .update({
+          access_token: null,
+          refresh_token: null,
+          token_expires_at: null,
+          platform_username: null,
+          profile_url: null,
+          updated_at: new Date().toISOString()
+        })
         .eq('user_id', user.id)
         .eq('platform', 'spotify');
 
