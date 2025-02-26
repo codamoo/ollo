@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
-import { checkVercelDomainStatus } from '@/lib/vercel-api';
+import { checkVercelDomainStatus } from '../../../../app/lib/vercel-api';
 
 export async function POST(request: Request) {
   try {

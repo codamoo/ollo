@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Check, Copy, Globe, AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import VercelDomainSetup from '@/app/components/vercel-domain-setup';
+import VercelDomainSetup from '../components/vercel-domain-setup';
 
 interface DomainVerificationProps {
   domain: string | null;
