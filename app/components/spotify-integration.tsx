@@ -110,9 +110,9 @@ export default function SpotifyIntegration() {
         setIntegration({
           connected: false,
           display_on_profile: true,
-          access_token: null,
-          refresh_token: null,
-          token_expires_at: null
+          token_expires_at: '',
+          refresh_token: '',
+          access_token: ''
         });
       }
     } catch (error) {
@@ -190,7 +190,13 @@ export default function SpotifyIntegration() {
 
       if (error) throw error;
 
-      setIntegration({ connected: false, display_on_profile: true });
+      setIntegration({
+        connected: false, 
+        display_on_profile: true,
+        token_expires_at: '',
+        refresh_token: '',
+        access_token: ''
+      });
       toast.success('Spotify account disconnected');
     } catch (error) {
       console.error('Error disconnecting Spotify:', error);
