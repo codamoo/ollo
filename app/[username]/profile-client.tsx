@@ -19,6 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import SpotifyPlayer from '../components/spotify-player';
 import MagicPortfolio from '../components/magic-portfolio';
 import SocialLinks from '../components/social-links';
+import YouTubeVideos from '../components/youtube-videos';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Post {
   id: string;
@@ -342,89 +344,90 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
       </div>
 
       {/* Profile Content */}
-      <main className="max-w-4xl mx-auto px-4 pt-20 pb-8">
-        {/* Profile Details */}
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex flex-col space-y-2">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-3xl font-bold">{profile.display_name || username}</h1>
-              {profile.is_verified && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <BadgeCheck className="h-5 w-5 text-blue-500" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Verified Account</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            <div className="flex items-center space-x-2">
-              <p className="text-muted-foreground">@{profile.username}</p>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+      <main className="max-w-7xl mx-auto px-4 pt-20 pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Left Column - Profile Info */}
+          <div className="md:col-span-1">
+            {/* Profile Details */}
+            <div className="mb-8">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <h1 className="text-3xl font-bold">{profile.display_name || username}</h1>
+                    {profile.is_verified && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <BadgeCheck className="h-5 w-5 text-blue-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Verified Account</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-muted-foreground">@{profile.username}</p>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6" 
+                            onClick={copyProfileUrl}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{copied ? 'Copied!' : 'Copy username'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6" 
+                            onClick={shareProfile}
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Share profile</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline" className="text-xs">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      Joined {formatJoinedDate(profile.created_at)}
+                    </Badge>
+                  </div>
+                </div>
+                {currentUserId && currentUserId !== profile.id && (
                     <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6" 
-                      onClick={copyProfileUrl}
+                      className="mt-2"
+                      onClick={handleFollow}
+                      variant={stats.is_following ? "outline" : "default"}
                     >
-                      <Copy className="h-4 w-4" />
+                      {stats.is_following ? 'Unfollow' : 'Follow'}
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{copied ? 'Copied!' : 'Copy username'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6" 
-                      onClick={shareProfile}
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Share profile</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  )}
+                            {currentUserId && currentUserId === profile.id && (
+                              <Button variant="outline" onClick={() => window.location.href = '/settings'}>
+                                Edit Profile
+                              </Button>
+                            )}
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="text-xs">
-                <Calendar className="h-3 w-3 mr-1" />
-                Joined {formatJoinedDate(profile.created_at)}
-              </Badge>
-            </div>
-          </div>
-          {currentUserId && currentUserId !== profile.id && (
-              <Button 
-                className="mt-2"
-                onClick={handleFollow}
-                variant={stats.is_following ? "outline" : "default"}
-              >
-                {stats.is_following ? 'Unfollow' : 'Follow'}
-              </Button>
-            )}
-                      {currentUserId && currentUserId === profile.id && (
-                        <Button variant="outline" onClick={() => window.location.href = '/settings'}>
-                          Edit Profile
-                        </Button>
-                      )}
-        </div>
 
-        {/* Tabs or Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          <div>
             {/* Bio */}
             {profile.bio && (
               <p className="text-lg mb-6">{profile.bio}</p>
@@ -453,28 +456,39 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
               <SocialLinks userId={profile.id} isOwner={currentUserId === profile.id} />
             </div>
 
-            {/* Spotify Player */}
-            <SpotifyPlayer userId={profile.id} />
-            
             <ProfileFollowing profileId={profile.id} currentUserId={currentUserId} />
           </div>
+
+          {/* Right Column - Tabbed Content */}
           <div className="md:col-span-2">
-              <h2 className="text-xl font-semibold mb-4">Posts</h2>
-              <PostsList 
-                posts={userPosts}
-                currentUserId={currentUserId}
-                onPostsUpdate={setUserPosts}
-              />
+            <Tabs defaultValue="posts" className="w-full">
+              <TabsList className="w-full justify-start">
+                <TabsTrigger value="posts">Posts</TabsTrigger>
+                <TabsTrigger value="videos">YouTube</TabsTrigger>
+                <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="posts" className="mt-6">
+                <PostsList 
+                  posts={userPosts}
+                  currentUserId={currentUserId}
+                  onPostsUpdate={setUserPosts}
+                />
+              </TabsContent>
+
+              <TabsContent value="videos" className="mt-6">
+                <YouTubeVideos userId={profile.id} />
+              </TabsContent>
+
+              <TabsContent value="portfolio" className="mt-6">
+                <MagicPortfolio 
+                  userId={profile.id} 
+                  isOwner={currentUserId === profile.id} 
+                />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
-
-        {/* Portfolio Section */}
-        <section className="mt-12">
-          <MagicPortfolio 
-            userId={profile.id} 
-            isOwner={currentUserId === profile.id} 
-          />
-        </section>
       </main>
     </div>
   );

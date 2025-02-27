@@ -31,7 +31,6 @@ import {
   Trash2,
   ExternalLink,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
 interface SocialLink {
   id: string;
@@ -48,44 +47,44 @@ const PLATFORMS = {
   github: {
     name: 'GitHub',
     icon: Github,
-    color: 'bg-gray-900 hover:bg-gray-800',
-    pattern: 'github.com/',
+    iconColor: 'text-gray-900 dark:text-white',
+    hoverColor: 'hover:border-gray-900 dark:hover:border-white',
   },
   twitter: {
     name: 'Twitter',
     icon: Twitter,
-    color: 'bg-[#1DA1F2] hover:bg-[#1a8cd8]',
-    pattern: 'twitter.com/',
+    iconColor: 'text-[#1DA1F2]',
+    hoverColor: 'hover:border-[#1DA1F2]',
   },
   instagram: {
     name: 'Instagram',
     icon: Instagram,
-    color: 'bg-[#E4405F] hover:bg-[#d1274a]',
-    pattern: 'instagram.com/',
+    iconColor: 'text-[#E4405F]',
+    hoverColor: 'hover:border-[#E4405F]',
   },
   linkedin: {
     name: 'LinkedIn',
     icon: Linkedin,
-    color: 'bg-[#0A66C2] hover:bg-[#094da1]',
-    pattern: 'linkedin.com/in/',
+    iconColor: 'text-[#0A66C2]',
+    hoverColor: 'hover:border-[#0A66C2]',
   },
   youtube: {
     name: 'YouTube',
     icon: Youtube,
-    color: 'bg-[#FF0000] hover:bg-[#d90000]',
-    pattern: 'youtube.com/',
+    iconColor: 'text-[#FF0000]',
+    hoverColor: 'hover:border-[#FF0000]',
   },
   twitch: {
     name: 'Twitch',
     icon: Twitch,
-    color: 'bg-[#9146FF] hover:bg-[#7a3dd6]',
-    pattern: 'twitch.tv/',
+    iconColor: 'text-[#9146FF]',
+    hoverColor: 'hover:border-[#9146FF]',
   },
   website: {
     name: 'Website',
     icon: Globe,
-    color: 'bg-gray-600 hover:bg-gray-500',
-    pattern: '',
+    iconColor: 'text-gray-600',
+    hoverColor: 'hover:border-gray-600',
   },
 };
 
@@ -158,10 +157,6 @@ export default function SocialLinks({ userId, isOwner }: SocialLinksProps) {
     }
   };
 
-  const formatUrl = (url: string) => {
-    return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -192,7 +187,7 @@ export default function SocialLinks({ userId, isOwner }: SocialLinksProps) {
                     {Object.entries(PLATFORMS).map(([key, platform]) => (
                       <SelectItem key={key} value={key}>
                         <div className="flex items-center">
-                          <platform.icon className="h-4 w-4 mr-2" />
+                          <platform.icon className={`h-4 w-4 mr-2 ${platform.iconColor}`} />
                           {platform.name}
                         </div>
                       </SelectItem>
@@ -227,11 +222,17 @@ export default function SocialLinks({ userId, isOwner }: SocialLinksProps) {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-white ${platform.color}`}
+                className={`
+                  flex items-center space-x-2 px-3 py-2 rounded-md
+                  border border-gray-200 dark:border-gray-800
+                  transition-colors duration-200
+                  ${platform.hoverColor}
+                  hover:bg-gray-50 dark:hover:bg-gray-800/50
+                `}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={`h-4 w-4 ${platform.iconColor}`} />
                 <span>{platform.name}</span>
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4 opacity-50" />
               </a>
               {isOwner && (
                 <Button
