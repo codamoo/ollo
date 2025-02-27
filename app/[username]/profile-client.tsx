@@ -456,6 +456,10 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
               <SocialLinks userId={profile.id} isOwner={currentUserId === profile.id} />
             </div>
 
+            {/* Spotify Player */}
+
+            <SpotifyPlayer userId={profile.id} />
+
             <ProfileFollowing profileId={profile.id} currentUserId={currentUserId} />
           </div>
 
