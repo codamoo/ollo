@@ -17,6 +17,8 @@ import PostsList from '@/components/posts-list';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import SpotifyPlayer from '../components/spotify-player';
+import MagicPortfolio from '../components/magic-portfolio';
+import SocialLinks from '../components/social-links';
 
 interface Post {
   id: string;
@@ -445,7 +447,12 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
                 </div>
               )}
             </div>
-            
+
+            {/* Social Links */}
+            <div className="mb-6">
+              <SocialLinks userId={profile.id} isOwner={currentUserId === profile.id} />
+            </div>
+
             {/* Spotify Player */}
             <SpotifyPlayer userId={profile.id} />
             
@@ -460,6 +467,14 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
               />
           </div>
         </div>
+
+        {/* Portfolio Section */}
+        <section className="mt-12">
+          <MagicPortfolio 
+            userId={profile.id} 
+            isOwner={currentUserId === profile.id} 
+          />
+        </section>
       </main>
     </div>
   );
