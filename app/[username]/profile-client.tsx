@@ -51,6 +51,21 @@ interface FollowStats {
   is_following: boolean;
 }
 
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  earned_at: string;
+}
+
+interface ProfileStats {
+  total_posts: number;
+  total_likes_received: number;
+  total_views: number;
+  join_streak_days: number;
+}
+
 export default function ProfileClient({ username }: { username: string }): JSX.Element {
   const [profile, setProfile] = useState({
     username: '',
@@ -76,6 +91,19 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
   });
   const [userPosts, setUserPosts] = useState<PostWithProfile[]>([]);
   const [copied, setCopied] = useState(false);
+  const [customization, setCustomization] = useState({
+    gradient_from: 'var(--profile-gradient-from)',
+    gradient_to: 'var(--profile-gradient-to)',
+    layout: 'default'
+  });
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [featuredPost, setFeaturedPost] = useState<PostWithProfile | null>(null);
+  const [profileStats, setProfileStats] = useState<ProfileStats>({
+    total_posts: 0,
+    total_likes_received: 0,
+    total_views: 0,
+    join_streak_days: 0
+  });
 
   useEffect(() => {
     fetchProfile();
@@ -85,6 +113,9 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
     if (profile.id) {
       fetchFollowData();
       fetchUserPosts();
+      fetchAchievements();
+      fetchFeaturedPost();
+      fetchProfileStats();
     }
   }, [profile.id]);
 
@@ -95,20 +126,23 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
         .select('*')
         .eq('username', username)
         .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setProfile(data);
-        setCurrentUserId(data.id);
-      } else {
-        setError('Profile not found');
+      
+      if (error) throw error
+      if (!data) {
+        setError('Profile not found')
+        return
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred while fetching the profile';
-      setError(message);
+      
+      setProfile(data)
+      await Promise.all([
+        fetchProfileStats(),
+        fetchFeaturedPost()
+      ])
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+      setError(error instanceof Error ? error.message : 'Failed to load profile')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -209,9 +243,9 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
       // Get posts with likes using the RPC function
       const { data: postsData, error: postsError } = await supabase
         .rpc('get_posts_with_likes', {
-          viewer_id: user?.id || null
+          viewer_id: profile?.id || null
         })
-        .eq('user_id', profile.id)
+        .eq('id', profile.id)
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
@@ -314,8 +348,69 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
+  async function fetchAchievements() {
+    try {
+      const { data, error } = await supabase
+        .from('user_achievements')
+        .select(`
+          *,
+          achievements (*)
+        `)
+        .eq('user_id', profile.id)
+        .order('earned_at', { ascending: false });
+
+      if (error) throw error;
+      setAchievements(data);
+    } catch (error) {
+      console.error('Error fetching achievements:', error);
+    }
+  }
+
+  async function fetchFeaturedPost() {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase
+        .rpc('get_featured_post', {
+          profile_id: profile.id,
+          viewer_id: user?.id || null
+        });
+
+      if (error) throw error;
+      setFeaturedPost(data);
+    } catch (error) {
+      console.error('Error fetching featured post:', error);
+    }
+  }
+
+  async function fetchProfileStats() {
+    try {
+      const { data, error } = await supabase
+        .rpc('get_profile_stats', { profile_id: profile.id });
+      
+      if (error) throw error;
+      setProfileStats(data);
+    } catch (error) {
+      console.error('Error fetching profile stats:', error);
+    }
+  }
+
   if (loading) return <Loading />;
-  if (error) return <ErrorMessage message={error} />;
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-500">{error}</h1>
+            <p className="mt-2 text-gray-600">
+              The profile you're looking for doesn't exist or has been removed.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -456,15 +551,132 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
               <SocialLinks userId={profile.id} isOwner={currentUserId === profile.id} />
             </div>
 
+            <Card className="p-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold">{profileStats.total_posts}</p>
+                  <p className="text-sm text-muted-foreground">Posts</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{profileStats.total_likes_received}</p>
+                  <p className="text-sm text-muted-foreground">Likes</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{profileStats.total_views}</p>
+                  <p className="text-sm text-muted-foreground">Profile Views</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{profileStats.join_streak_days}</p>
+                  <p className="text-sm text-muted-foreground">Day Streak</p>
+                </div>
+              </div>
+            </Card>
+
             {/* Spotify Player */}
 
             <SpotifyPlayer userId={profile.id} />
+
+            {currentUserId === profile.id && (
+              <Card className="p-4 mb-6">
+                <h3 className="font-bold mb-4">Customize Profile</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium">Banner Gradient</label>
+                    <div className="flex gap-2 mt-2">
+                      <Input 
+                        type="color" 
+                        value={customization.gradient_from}
+                        onChange={(e) => setCustomization(prev => ({
+                          ...prev,
+                          gradient_from: e.target.value
+                        }))}
+                      />
+                      <Input 
+                        type="color" 
+                        value={customization.gradient_to}
+                        onChange={(e) => setCustomization(prev => ({
+                          ...prev,
+                          gradient_to: e.target.value
+                        }))}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Layout</label>
+                    <select 
+                      className="w-full mt-2 rounded-md border"
+                      value={customization.layout}
+                      onChange={(e) => setCustomization(prev => ({
+                        ...prev,
+                        layout: e.target.value
+                      }))}
+                    >
+                      <option value="default">Default</option>
+                      <option value="compact">Compact</option>
+                      <option value="grid">Grid</option>
+                    </select>
+                  </div>
+                  <Button onClick={ () => console.log(customization) }>
+                    Save Changes
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {achievements.length > 0 && (
+              <Card className="p-4 mb-6">
+                <h3 className="font-bold mb-4">Achievements</h3>
+                <div className="flex flex-wrap gap-2">
+                  {achievements.map((achievement) => (
+                    <TooltipProvider key={achievement.id}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                            <img 
+                              src={achievement.icon} 
+                              alt={achievement.name}
+                              className="w-6 h-6"
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="text-sm">
+                            <p className="font-bold">{achievement.name}</p>
+                            <p>{achievement.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Earned {new Date(achievement.earned_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
+              </Card>
+            )}
 
             <ProfileFollowing profileId={profile.id} currentUserId={currentUserId} />
           </div>
 
           {/* Right Column - Tabbed Content */}
           <div className="md:col-span-2">
+            {featuredPost && (
+              <Card className="p-4 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold">Featured Post</h3>
+                  {currentUserId === profile.id && (
+                    <Button variant="outline" size="sm" onClick={() => {/* Add logic to change featured post */}}>
+                      Change
+                    </Button>
+                  )}
+                </div>
+                <PostsList 
+                  posts={[featuredPost]}
+                  currentUserId={currentUserId}
+                  onPostsUpdate={() => fetchFeaturedPost()}
+                />
+              </Card>
+            )}
             <Tabs defaultValue="posts" className="w-full">
               <TabsList className="w-full justify-start">
                 <TabsTrigger value="posts">Posts</TabsTrigger>

@@ -13,6 +13,37 @@ export default function SpotifyConnectButton() {
   const [syncError, setSyncError] = useState<string | null>(null);
   const router = useRouter();
 
+  const refreshToken = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user');
+      }
+
+      const response = await fetch('/api/spotify/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to refresh token');
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     async function checkAuth() {
       try {

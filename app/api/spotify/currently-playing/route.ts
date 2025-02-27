@@ -33,40 +33,82 @@ export async function GET(request: Request) {
     const now = new Date();
     const tokenExpiresAt = new Date(integration.token_expires_at);
     let accessToken = integration.access_token;
-    
+
     if (now >= tokenExpiresAt) {
-      // Token is expired, refresh it
-      const refreshResponse = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${Buffer.from(
-            `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-          ).toString('base64')}`
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: integration.refresh_token,
-        }),
-      });
+      try {
+        // Token is expired, refresh it
+        const refreshResponse = await fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${Buffer.from(
+              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+            ).toString('base64')}`
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: integration.refresh_token,
+          }),
+        });
 
-      if (!refreshResponse.ok) {
-        return NextResponse.json({ error: 'Failed to refresh token' }, { status: 500 });
+        if (!refreshResponse.ok) {
+          const errorData = await refreshResponse.json();
+          console.error('Token refresh failed:', {
+            status: refreshResponse.status,
+            error: errorData
+          });
+          
+          // If refresh token is invalid, disconnect the integration
+          if (refreshResponse.status === 400 || refreshResponse.status === 401) {
+            await supabase
+              .from('integrations')
+              .update({
+                access_token: null,
+                refresh_token: null,
+                token_expires_at: null,
+                connected: false,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', userId)
+              .eq('platform', 'spotify');
+            
+            return NextResponse.json(
+              { 
+                error: 'Spotify connection expired. Please reconnect your account.',
+                code: 'SPOTIFY_CONNECTION_EXPIRED'
+              }, 
+              { status: 401 }
+            );
+          }
+          
+          return NextResponse.json(
+            { 
+              error: 'Failed to refresh Spotify access token',
+              code: 'SPOTIFY_REFRESH_FAILED'
+            }, 
+            { status: 500 }
+          );
+        }
+
+        const refreshData = await refreshResponse.json();
+        accessToken = refreshData.access_token;
+        
+        // Update the token in the database
+        await supabase
+          .from('integrations')
+          .update({
+            access_token: refreshData.access_token,
+            refresh_token: refreshData.refresh_token || integration.refresh_token,
+            token_expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
+            connected: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId)
+          .eq('platform', 'spotify');
+      } catch (error) {
+        console.error('Error refreshing token:', error);
+        return NextResponse.json({ error: 'Failed to refresh Spotify access token' }, { status: 500 });
       }
-
-      const refreshData = await refreshResponse.json();
-      accessToken = refreshData.access_token;
-      
-      // Update the token in the database
-      await supabase
-        .from('integrations')
-        .update({
-          access_token: refreshData.access_token,
-          refresh_token: refreshData.refresh_token || integration.refresh_token,
-          token_expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
-        })
-        .eq('user_id', userId)
-        .eq('platform', 'spotify');
     }
 
     // Get currently playing track from Spotify
