@@ -126,23 +126,20 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
         .select('*')
         .eq('username', username)
         .single();
-      
-      if (error) throw error
-      if (!data) {
-        setError('Profile not found')
-        return
+
+      if (error) throw error;
+
+      if (data) {
+        setProfile(data);
+        setCurrentUserId(data.id);
+      } else {
+        setError('Profile not found');
       }
-      
-      setProfile(data)
-      await Promise.all([
-        fetchProfileStats(),
-        fetchFeaturedPost()
-      ])
-    } catch (error) {
-      console.error('Error fetching profile:', error)
-      setError(error instanceof Error ? error.message : 'Failed to load profile')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred while fetching the profile';
+      setError(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -243,9 +240,9 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
       // Get posts with likes using the RPC function
       const { data: postsData, error: postsError } = await supabase
         .rpc('get_posts_with_likes', {
-          viewer_id: profile?.id || null
+          viewer_id: user?.id || null
         })
-        .eq('id', profile.id)
+        .eq('user_id', profile.id)
         .order('created_at', { ascending: false });
 
       if (postsError) throw postsError;
@@ -396,21 +393,7 @@ export default function ProfileClient({ username }: { username: string }): JSX.E
   }
 
   if (loading) return <Loading />;
-  if (error) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-500">{error}</h1>
-            <p className="mt-2 text-gray-600">
-              The profile you're looking for doesn't exist or has been removed.
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  if (error) return <ErrorMessage message={error} />;
 
   return (
     <div className="min-h-screen bg-background">
