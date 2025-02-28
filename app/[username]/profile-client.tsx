@@ -43,6 +43,7 @@ interface Profile {
 
 interface PostWithProfile extends Post {
   profile?: Profile;
+  comments_count: number;
 }
 
 interface FollowStats {
