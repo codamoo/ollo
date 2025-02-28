@@ -1,17 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import Navbar from '@/components/navbar';
-import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import CreatePost from '@/components/create-post';
-import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
-import { AudioPlayer } from '@/components/ui/audio-player';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { redirect } from 'next/navigation';
+import Navbar from '@/components/navbar';
 import PostsList from '@/components/posts-list';
+import CreatePost from '@/components/create-post';
+import { Card } from '@/components/ui/card';
 
 interface Post {
   id: string;
@@ -22,6 +18,10 @@ interface Post {
   type: 'text' | 'markdown' | 'music';
   likes_count: number;
   is_liked: boolean;
+  comments_count: number;
+  username: string;
+  display_name: string | undefined;
+  avatar_url: string | undefined;
 }
 
 interface Profile {
@@ -37,23 +37,44 @@ interface PostWithProfile extends Post {
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public`;
 
 export default function Dashboard() {
-  const [posts, setPosts] = useState([] as PostWithProfile[]);
+  const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const fetchCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setCurrentUserId(user?.id || null);
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error || !user) {
+        redirect('/login');
+        return;
+      }
+
+      setCurrentUserId(user.id);
+      fetchPosts();
+    } catch (error) {
+      console.error('Error checking user:', error);
+      redirect('/login');
+    }
   };
 
   const fetchPosts = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Pass the user ID as a string, or null if not authenticated
+      if (!user) {
+        redirect('/login');
+        return;
+      }
+
       const { data: postsData, error: postsError } = await supabase
         .rpc('get_posts_with_likes', {
-          viewer_id: user.id
+          viewer_id: user.id.toString(),
+          profile_username: null
         });
 
       if (postsError) throw postsError;
@@ -67,27 +88,33 @@ export default function Dashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchCurrentUser();
-    fetchPosts();
-  }, []);
-
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          Loading...
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="max-w-4xl flex mx-auto px-4 py-4">
-        <Card className="pb-0 border-none mr-5">
-          <CreatePost onPostCreated={fetchPosts} />
-        </Card>
-        <PostsList 
-          posts={posts}
-          currentUserId={currentUserId}
-          onPostsUpdate={setPosts}
-        />
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="p-4">
+            <CreatePost onPostCreated={fetchPosts} />
+          </Card>
+          <PostsList 
+            posts={posts}
+            currentUserId={currentUserId}
+            onPostsUpdate={(updatedPosts) => {
+              setPosts(updatedPosts as unknown as PostWithProfile[]);
+            }}
+          />
+        </div>
       </main>
     </div>
   );

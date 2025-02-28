@@ -27,6 +27,20 @@ interface Profile {
   avatar_url?: string;
 }
 
+interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  profiles: {
+    id: string;
+    username: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
 interface Post {
   id: string;
   user_id: string;
@@ -45,6 +59,8 @@ interface Post {
   author_username?: string;
   author_display_name?: string;
   author_avatar_url?: string;
+  comments?: Comment[];
+  comments_count: number;
 }
 
 interface PostsListProps {
@@ -57,6 +73,108 @@ export default function PostsList({ posts, currentUserId, onPostsUpdate }: Posts
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editedContent, setEditedContent] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [showComments, setShowComments] = useState<Record<string, boolean>>({});
+  const [newComment, setNewComment] = useState<Record<string, string>>({});
+  const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
+
+  const toggleComments = async (postId: string) => {
+    setShowComments(prev => {
+      const newState = { ...prev, [postId]: !prev[postId] };
+      if (newState[postId]) {
+        fetchComments(postId);
+      }
+      return newState;
+    });
+  };
+
+  const fetchComments = async (postId: string) => {
+    setLoadingComments(prev => ({ ...prev, [postId]: true }));
+    try {
+      const { data: comments, error } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          profiles (
+            id,
+            username,
+            display_name,
+            avatar_url
+          )
+        `)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      onPostsUpdate(
+        posts.map(post =>
+          post.id === postId
+            ? { ...post, comments }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      toast.error('Error loading comments');
+    } finally {
+      setLoadingComments(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleAddComment = async (postId: string) => {
+    if (!currentUserId) {
+      toast.error('Please sign in to comment');
+      return;
+    }
+
+    const comment = newComment[postId]?.trim();
+    if (!comment) {
+      toast.error('Comment cannot be empty');
+      return;
+    }
+
+    try {
+      const { data: newCommentData, error } = await supabase
+        .from('comments')
+        .insert({
+          post_id: postId,
+          user_id: currentUserId,
+          content: comment
+        })
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            username,
+            display_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // Update the posts state with the new comment
+      onPostsUpdate(
+        posts.map(post =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: [...(post.comments || []), newCommentData],
+                comments_count: (post.comments_count || 0) + 1
+              }
+            : post
+        )
+      );
+
+      // Clear the comment input
+      setNewComment(prev => ({ ...prev, [postId]: '' }));
+      toast.success('Comment added');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Error adding comment');
+    }
+  };
 
   // Helper function to get the display name and username
   const getPostUser = (post: Post) => {
@@ -252,6 +370,69 @@ export default function PostsList({ posts, currentUserId, onPostsUpdate }: Posts
                   className="mt-4"
                 />
               )}
+              <div className="mt-4 border-t pt-4">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => toggleComments(post.id)}
+                  >
+                    💬 {post.comments_count || 0} Comments
+                  </Button>
+                </div>
+
+                {showComments[post.id] && (
+                  <div className="mt-4 space-y-4">
+                    {loadingComments[post.id] ? (
+                      <div className="text-center">Loading comments...</div>
+                    ) : (
+                      <>
+                        {post.comments?.map((comment) => (
+                          <div key={comment.id} className="flex gap-2 items-start">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={comment.profiles?.avatar_url || ''} />
+                              <AvatarFallback>
+                                {comment.profiles?.display_name?.[0] || comment.profiles?.username?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">
+                                  {comment.profiles?.display_name || comment.profiles?.username}
+                                </span>
+                                <span className="text-sm text-muted-foreground">
+                                  {new Date(comment.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm mt-1">{comment.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {currentUserId && (
+                          <div className="flex gap-2 mt-4">
+                            <Textarea
+                              placeholder="Add a comment..."
+                              value={newComment[post.id] || ''}
+                              onChange={(e) => setNewComment(prev => ({
+                                ...prev,
+                                [post.id]: e.target.value
+                              }))}
+                              className="flex-1"
+                            />
+                            <Button
+                              onClick={() => handleAddComment(post.id)}
+                              size="sm"
+                            >
+                              Post
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </Card>
           );
         })}
