@@ -63,7 +63,7 @@ export default function AIChat() {
     }
 
     if (data && data.length > 0) {
-      setMessages(data.map(msg => ({
+      setMessages(data.map((msg: { role: string; content: any; id: any; conversation_id: any; sequence_number: any; }) => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content,
         id: msg.id,
@@ -107,7 +107,7 @@ export default function AIChat() {
       return;
     }
 
-    const uniqueConversations = data.reduce((acc: any[], curr) => {
+    const uniqueConversations = data.reduce((acc: any[], curr: { conversation_id: any; content: string; created_at: string | number | Date; }) => {
       if (!acc.find(c => c.id === curr.conversation_id)) {
         acc.push({
           id: curr.conversation_id,
@@ -139,7 +139,7 @@ export default function AIChat() {
     }
 
     setConversationId(conversationId);
-    setMessages(data.map(msg => ({
+    setMessages(data.map((msg: { role: string; content: any; id: any; conversation_id: any; sequence_number: any; }) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
       id: msg.id,
@@ -265,7 +265,15 @@ export default function AIChat() {
                               ul: ({children}) => <ul className="list-disc ml-6 mb-4">{children}</ul>,
                               ol: ({children}) => <ol className="list-decimal ml-6 mb-4">{children}</ol>,
                               li: ({children}) => <li className="mb-1">{children}</li>,
-                              code: ({node, inline, className, children, ...props}) => (
+                              code: ({
+                                inline,
+                                className,
+                                children,
+                                ...props
+                              }: React.ClassAttributes<HTMLElement> & 
+                                 React.HTMLAttributes<HTMLElement> & {
+                                   inline?: boolean;
+                                 }) => (
                                 inline ? 
                                   <code className="bg-secondary/50 rounded px-1 py-0.5" {...props}>{children}</code> :
                                   <pre className="bg-secondary/50 p-4 rounded-lg overflow-x-auto">
