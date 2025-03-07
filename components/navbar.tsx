@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from './ui/button';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Home, User, Settings, LogOut, Sparkles, Search } from 'lucide-react';
+import { Home, User, Settings, LogOut, Sparkles, Search, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Navbar() {
@@ -64,7 +64,12 @@ export default function Navbar() {
                 </Link>
                 <Link href="/explore">
                   <Button variant={pathname === '/explore' ? 'default' : 'ghost'}>
-                   <Search className="h-5 w-5" />
+                    <Search className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/chat">
+                  <Button variant={pathname === '/chat' ? 'default' : 'ghost'}>
+                    <Wand2 className="h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href={username ? `/${username}` : '/profile'}>
