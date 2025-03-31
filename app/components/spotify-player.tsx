@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/card';
 import { Music, Pause, Play, ExternalLink, Volume2, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Column, Heading, Icon, Row, Button, IconButton } from '@/once-ui/components';
 
 interface SpotifyTrack {
   id: string;
@@ -198,34 +198,34 @@ export default function SpotifyPlayer({ userId }: { userId: string }) {
 
   if (error) {
     return (
-      <Card className="p-4 mb-6">
+      <Column fillWidth padding="12" radius="l" border="neutral-medium" gap="12">
         <div className="flex items-center space-x-3 mb-2">
-          <Music className="h-5 w-5 text-green-500" />
-          <h3 className="font-medium">Currently Playing</h3>
+          <Icon name="chevronRight" onBackground="success-weak"/>
+          <Heading as="h3" variant="heading-strong-l">
+            Currently Playing
+          </Heading>
         </div>
         <div className="text-sm text-muted-foreground mb-2">
           Could not load Spotify data: {error}
         </div>
         <Button 
-          variant="outline" 
-          size="sm" 
+          variant="secondary"
           onClick={refreshTrack} 
           disabled={refreshing}
-          className="w-full"
+          prefixIcon={refreshing ? "refresh" : undefined}
+          fillWidth
         >
           {refreshing ? (
             <>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
               Refreshing...
             </>
           ) : (
             <>
-              <RefreshCw className="h-4 w-4 mr-2" />
               Try Again
             </>
           )}
         </Button>
-      </Card>
+      </Column>
     );
   }
 
@@ -237,9 +237,7 @@ export default function SpotifyPlayer({ userId }: { userId: string }) {
             <Music className="h-5 w-5 text-green-500" />
             <h3 className="font-medium">Spotify</h3>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
             onClick={refreshTrack} 
             disabled={refreshing}
             className="h-8 w-8"
@@ -259,15 +257,12 @@ export default function SpotifyPlayer({ userId }: { userId: string }) {
           <Music className="h-5 w-5 text-green-500" />
           <h3 className="font-medium">Currently Playing on Spotify</h3>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <IconButton 
+          variant="secondary"
           onClick={refreshTrack} 
           disabled={refreshing}
-          className="h-8 w-8"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </Button>
+          name="refresh"
+        />
       </div>
       
       <div className="flex items-center space-x-3">
