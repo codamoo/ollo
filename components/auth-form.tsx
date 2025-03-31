@@ -4,10 +4,8 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
 import { Card } from './ui/card'
-import { AlertCircle } from 'lucide-react'
+import { Button, Input } from '@/once-ui/components'
 
 export default function AuthForm() {
   const router = useRouter()
@@ -134,8 +132,9 @@ export default function AuthForm() {
         {!isLogin && (
           <div className="space-y-2">
             <Input
+              id="username"
+              label="Username"
               type="text"
-              placeholder="Username (letters, numbers, underscores only)"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().trim())}
               required
@@ -147,16 +146,18 @@ export default function AuthForm() {
         )}
         <div className="space-y-2">
           <Input
+            id="email"
+            label="Email"
             type="email"
-            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value.trim())}
             required
             disabled={loading}
           />
           <Input
+            id="password"
+            label="Password"
             type="password"
-            placeholder="Password (minimum 6 characters)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -166,7 +167,7 @@ export default function AuthForm() {
         </div>
         <Button
           type="submit"
-          className="w-full"
+          fillWidth
           disabled={loading}
         >
           {loading ? (
@@ -180,8 +181,8 @@ export default function AuthForm() {
         </Button>
         <Button
           type="button"
-          variant="ghost"
-          className="w-full"
+          variant="secondary"
+          fillWidth
           onClick={() => setIsLogin(!isLogin)}
           disabled={loading}
         >
